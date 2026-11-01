@@ -3,7 +3,8 @@
 Thư viện Python để dùng dịch vụ tạo video riêng (ComfyUI + MiniMax H3) — dành cho nhóm bạn được mời.
 Bạn cần **API key** (`vs_...`) và **URL dịch vụ** do chủ dịch vụ gửi riêng. Không có key thì thư viện không làm gì được.
 
-> Sắp có: MCP server để dùng thẳng trong Claude Code ("làm cho tôi video 5 giây ...").
+Dùng được hai cách: nói thẳng với Claude Code ("làm cho tôi video 5 giây ...", xem
+[Dùng trong Claude Code](#dùng-trong-claude-code)) hoặc gọi từ Python.
 
 ## Cài đặt
 
@@ -29,6 +30,29 @@ export VIDEOSERVICE_API_KEY="vs_..."
 ```
 
 Trên Windows PowerShell: `$env:VIDEOSERVICE_URL = "..."` và `$env:VIDEOSERVICE_API_KEY = "vs_..."`.
+
+## Dùng trong Claude Code
+
+Sau khi cài (mục trên), thêm MCP server `videoservice` vào Claude Code một lần cho mọi dự án:
+
+```bash
+claude mcp add --scope user videoservice -e VIDEOSERVICE_URL="<URL chủ dịch vụ gửi>" -e VIDEOSERVICE_API_KEY="vs_..." -- python -m videoservice.mcp_server
+```
+
+- `python` phải là Python bạn đã `pip install` thư viện. Nếu không chắc, ghi đường dẫn đầy đủ: chạy
+  `python -c "import sys; print(sys.executable)"` rồi thay `python` trong lệnh trên bằng kết quả.
+- Có [uv](https://docs.astral.sh/uv/) thì không cần `pip install`: thay phần sau `--` bằng
+  `uvx --from git+https://github.com/lepdat/videoservice-client videoservice-mcp`.
+- Đổi key hoặc URL: `claude mcp remove --scope user videoservice` rồi thêm lại. Kiểm tra: `claude mcp list`.
+
+Mở lại Claude Code rồi nói, ví dụ: *"làm cho tôi video 5 giây 768P cảnh phố cổ Hà Nội lúc hoàng hôn"*. Agent tự xem số
+dư và giá, dựng workflow, gửi job, chờ, rồi tải video vào thư mục đang mở. Muốn workflow khác (ảnh, ghép...) cứ mô tả:
+agent xem danh sách node và schema của từng node trước khi tự dựng.
+
+Các tool agent dùng: `balance`, `pricing`, `list_nodes`, `node_schema`, `list_models`, `video_template` (video H3 dựng
+sẵn kèm giá ước tính), `submit_workflow` (tool duy nhất tốn tiền), `job_status`, `download_result`, `cancel_job`.
+Claude Code hỏi trước khi dùng mỗi tool; muốn khỏi hỏi thì chọn "don't ask again" cho tool đó. Muốn giới hạn tiền
+cho một video, nói luôn với agent (ví dụ "tối đa 5.000đ").
 
 ## Tạo video bằng một dòng
 
@@ -82,7 +106,7 @@ paths = c.run(workflow, save_dir="out")   # gửi → chờ → tải kết qu�
 ```
 
 `workflow` là workflow ComfyUI dạng **API format** (dict `{"<node_id>": {"class_type": ..., "inputs": {...}}}`).
-Xem node dùng được: `c.list_nodes()` (lọc: `c._req("GET", "/nodes", params={"q": "video"})`), chi tiết một node:
+Xem node dùng được: `c.list_nodes()` (lọc: `c.list_nodes(q="video")`), chi tiết một node:
 `c.node_schema("SaveVideo")`.
 
 Video MiniMax H3 dựng sẵn (không cần tự viết workflow):

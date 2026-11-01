@@ -1,10 +1,13 @@
 [project]
 name = "videoservice"
-version = "0.3.1"
+version = "0.4.0"
 description = "Client tạo ảnh/video qua dịch vụ riêng"
 readme = "README.md"
 requires-python = ">=3.10"
-dependencies = ["requests>=2.31"]
+dependencies = ["requests>=2.31", "mcp>=2.3,<3"]
+
+[project.scripts]
+videoservice-mcp = "videoservice.mcp_server:main"
 
 [build-system]
 requires = ["setuptools>=68"]

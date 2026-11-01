@@ -75,8 +75,9 @@ class Client:
     def pricing(self) -> dict:
         return self._req("GET", "/pricing")
 
-    def list_nodes(self) -> dict:
-        return self._req("GET", "/nodes")
+    def list_nodes(self, q: str | None = None, category: str | None = None) -> dict:
+        """Không lọc: số node theo nhóm + output node. q: tìm theo tên/mô tả; category: nhóm (ví dụ "image")."""
+        return self._req("GET", "/nodes", params={"q": q, "category": category})
 
     def node_schema(self, class_type: str) -> dict:
         return self._req("GET", f"/nodes/{class_type}")
