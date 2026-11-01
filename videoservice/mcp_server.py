@@ -109,10 +109,11 @@ def build_server(client: Client | None = None) -> MCPServer:
 
         name: "h3_t2v" (từ mô tả) hoặc "h3_i2v" (ảnh là khung hình đầu: gửi ảnh qua inputs của submit_workflow,
         tên file lấy từ "inputs" của kết quả). prompt: mô tả video, viết tiếng Anh cho kết quả tốt hơn.
-        resolution: "480P" hoặc "768P" (tối đa, 1344×768); seconds: tối đa 10. portrait=true: video dọc.
+        resolution: "480P" hoặc "768P" (tối đa, 1344×768); seconds: tối đa 15. portrait=true: video dọc.
         seed: đổi để ra kết quả khác. upscale="2K": phóng lên 1440p trong cùng job, tối đa 10 giây video, lâu và đắt
-        gấp nhiều lần. Giá cỡ (xem estimate để có số chính xác): 480P 5s ~400đ, chạy ~1,5 phút; 768P 10s ~2.000đ,
-        ~7 phút; 768P 5s + 2K ~2.900đ, ~10 phút. Kết quả: workflow, inputs, estimate (price_vnd, hold_vnd = tiền giữ
+        gấp nhiều lần. Giá cỡ (xem estimate để có số chính xác): 480P 5s ~400đ, chạy ~1,5 phút; 480P 15s ~1.000đ,
+        ~4 phút; 768P 10s ~2.000đ, ~7 phút; 768P 15s ~4.100đ, ~9 phút (768P trên 10 giây chạy GPU H100, đắt hơn mỗi
+        giây); 768P 5s + 2K ~2.900đ, ~10 phút. Kết quả: workflow, inputs, estimate (price_vnd, hold_vnd = tiền giữ
         trước ~1,5 lần giá, wait_s, runtime_s)."""
         params = {"prompt": prompt, "resolution": resolution, "seconds": seconds, "portrait": portrait or None,
                   "seed": seed, "upscale": upscale}
@@ -129,8 +130,9 @@ def build_server(client: Client | None = None) -> MCPServer:
         inputs: {tên file trong workflow: đường dẫn file ảnh trên máy}, ví dụ {"first_frame.png": "anh/meo.png"};
         tổng tối đa 20 MB mỗi job.
         max_cost_vnd: giới hạn tiền cho job; phải ≥ hold_vnd của estimate, thấp hơn thì job có thể bị cắt giữa chừng
-        mà vẫn mất tiền. Giới hạn: tối đa 768P (1344×768) và 10 giây video H3; tối đa 200 node; job chờ GPU quá
-        3 giờ thì bị hủy (không tính tiền). Trả job_id, estimated_cost, held, timeout_s; theo dõi bằng job_status."""
+        mà vẫn mất tiền. Giới hạn: tối đa 768P (1344×768) và 15 giây video H3 (10 giây nếu upscale 2K); tối đa
+        200 node; job chờ GPU quá 3 giờ thì bị hủy (không tính tiền). Trả job_id, estimated_cost, held, timeout_s;
+        theo dõi bằng job_status."""
         missing = [p for p in (inputs or {}).values() if not Path(p).is_file()]
         if missing:
             raise ToolError(f"Không thấy file ảnh trên máy: {missing}. 'inputs' là {{tên file trong workflow:"

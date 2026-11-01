@@ -68,7 +68,8 @@ path = image_to_video("anh.png", "Con mèo vẫy đuôi", seconds=5)   # ảnh l
 Hàm gửi job, in tiến độ, chờ xong rồi tải video về và trả đường dẫn file (`pathlib.Path`). Không cần biết workflow ComfyUI.
 
 - `resolution`: `"480P"` (mặc định) hoặc `"768P"`. **Tối đa 768P** (1344×768).
-- `seconds`: số giây video (mặc định 5; giới hạn theo độ phân giải: `Client().list_templates()["limits"]`).
+- `seconds`: số giây video (mặc định 5, tối đa 15; giới hạn hiện hành: `Client().list_templates()["limits"]`). 768P
+  dài hơn 10 giây chạy trên GPU lớn hơn: nhanh hơn nhưng đắt hơn mỗi giây (768P 15s ~4.100đ, ~9 phút).
 - `max_cost_vnd=30000`: giới hạn tiền cho job này. Dịch vụ giữ trước khoảng 1,5 lần giá ước tính (phần thừa trả
   lại); nếu giới hạn thấp hơn số tiền giữ đó thì hàm báo lỗi `max_cost_below_hold` và **không gửi job**, vì job có thể
   bị cắt giữa chừng mà vẫn mất tiền. Số tiền giữ của từng loại video: `hold_vnd` trong `Client().pricing()["h3_video"]`.
@@ -85,9 +86,9 @@ Giá ước tính trước khi chạy: `Client().pricing()["h3_video"]`. Job l�
 Dịch vụ tạo tối đa 768P. Có hai cách lên 2K:
 
 - `text_to_video(..., resolution="768P", upscale="2K")` (cả `image_to_video`): dịch vụ phóng video lên 1440p
-  (768P → 2520×1440) bằng SeedVR2 ngay trong job, giữ nguyên tiếng; tối đa 10 giây video. Lâu và đắt hơn video thường
-  nhiều lần (5 giây 2K mất ~10 phút, ~2.900đ, giữ trước ~4.300đ; 10 giây ~21 phút, ~5.900đ, giữ trước ~8.900đ),
-  xem `Client().pricing()["h3_video"]`.
+  (768P → 2520×1440) bằng SeedVR2 ngay trong job, giữ nguyên tiếng; tối đa 10 giây video (video thường tới 15
+  giây). Lâu và đắt hơn video thường nhiều lần (5 giây 2K mất ~10 phút, ~2.900đ, giữ trước ~4.300đ; 10 giây ~21 phút,
+  ~5.900đ, giữ trước ~8.900đ), xem `Client().pricing()["h3_video"]`.
 - Tự upscale video đã tải về (lên được cả 4K), ví dụ:
   - [Video2X](https://github.com/k4yt3x/video2x) (miễn phí, chạy trên GPU của máy bạn, dùng Real-ESRGAN / Real-CUGAN).
   - [Topaz Video AI](https://www.topazlabs.com/topaz-video-ai) (trả phí, dễ dùng).
