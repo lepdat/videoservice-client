@@ -62,7 +62,7 @@ Dịch vụ tạo tối đa 768P. Có hai cách lên 2K:
 
 - `text_to_video(..., resolution="768P", upscale="2K")` (cả `image_to_video`): dịch vụ phóng video lên 1440p
   (768P → 2520×1440) bằng SeedVR2 ngay trong job, giữ nguyên tiếng; tối đa 10 giây video. Lâu và đắt hơn video thường
-  nhiều lần (5 giây 2K mất ~10 phút, ~33.000đ, giữ trước ~52.000đ; 10 giây ~21 phút, ~70.000đ, giữ trước ~106.000đ),
+  nhiều lần (5 giây 2K mất ~10 phút, ~2.900đ, giữ trước ~4.300đ; 10 giây ~21 phút, ~5.900đ, giữ trước ~8.900đ),
   xem `Client().pricing()["h3_video"]`.
 - Tự upscale video đã tải về (lên được cả 4K), ví dụ:
   - [Video2X](https://github.com/k4yt3x/video2x) (miễn phí, chạy trên GPU của máy bạn, dùng Real-ESRGAN / Real-CUGAN).
