@@ -17,8 +17,8 @@ from pathlib import Path
 
 import requests
 
-# Thay bằng URL Modal in ra sau khi chạy `modal deploy server.py`
-DEFAULT_URL = os.environ.get("VIDEOSERVICE_URL", "https://<workspace>--video-service-web.modal.run")
+# URL do chủ dịch vụ gửi riêng cùng API key.
+DEFAULT_URL = os.environ.get("VIDEOSERVICE_URL", "")
 
 FINAL_STATUSES = ("succeeded", "failed", "cancelled")
 
@@ -39,6 +39,8 @@ class VideoServiceError(Exception):
 class Client:
     def __init__(self, api_key: str | None = None, base_url: str = DEFAULT_URL):
         self.api_key = api_key or os.environ["VIDEOSERVICE_API_KEY"]
+        if not base_url:
+            raise ValueError("Thiếu URL dịch vụ: đặt VIDEOSERVICE_URL hoặc truyền base_url=...")
         self.base_url = base_url.rstrip("/")
         self.session = requests.Session()
         self.session.headers["x-api-key"] = self.api_key

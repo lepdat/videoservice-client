@@ -2,6 +2,7 @@
 name = "videoservice"
 version = "0.2.0"
 description = "Client tạo ảnh/video qua dịch vụ riêng"
+readme = "README.md"
 requires-python = ">=3.10"
 dependencies = ["requests>=2.31"]
 
