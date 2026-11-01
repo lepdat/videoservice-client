@@ -84,6 +84,8 @@ class Client:
     def template(self, name: str, **params) -> dict:
         """Workflow mẫu dựng sẵn, ví dụ template("h3_i2v", prompt="...", resolution="768P", seconds=5).
 
+        upscale="2K" phóng video lên 1440p bằng SeedVR2 trong cùng job (lâu và đắt hơn, xem "estimate").
+
         Trả {workflow, inputs, ...}; gửi bằng submit(t["workflow"], inputs={tên trong t["inputs"]: đường dẫn ảnh}).
         """
         return self._req("GET", f"/templates/{name}", params=params)

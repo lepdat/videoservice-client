@@ -46,6 +46,22 @@ paths = c.run(workflow, save_dir="out")   # gửi → chờ → tải kết qu�
 Xem node dùng được: `c.list_nodes()` (lọc: `c._req("GET", "/nodes", params={"q": "video"})`), chi tiết một node:
 `c.node_schema("SaveVideo")`.
 
+Video MiniMax H3 dựng sẵn (không cần tự viết workflow):
+
+```python
+t = c.template("h3_t2v", prompt="Phố cổ Hà Nội lúc hoàng hôn", resolution="768P", seconds=5)
+print(t["estimate"])                      # giá, tiền giữ, thời gian chờ ước tính
+paths = c.run(t["workflow"], save_dir="out")
+```
+
+- `resolution`: `480P` hoặc `768P`; `seconds`: số giây video; `portrait=True`: video dọc.
+- `upscale="2K"`: phóng video lên 1440p (768P → 2520×1440) bằng SeedVR2 ngay trong job, giữ nguyên tiếng; tối đa
+  5 giây video. Lâu và đắt hơn video thường nhiều lần (5 giây 2K mất ~10 phút), xem `t["estimate"]` hoặc
+  `c.pricing()["h3_video"]`.
+- `c.template("h3_i2v", image="anh.png", ...)` lấy ảnh làm khung hình đầu: gửi kèm
+  `c.run(t["workflow"], save_dir="out", inputs={"anh.png": "duong/dan/anh.png"})`.
+- Danh sách tham số: `c.list_templates()`.
+
 Từng bước, nếu muốn tự điều khiển:
 
 ```python
