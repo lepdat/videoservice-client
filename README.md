@@ -30,7 +30,41 @@ export VIDEOSERVICE_API_KEY="vs_..."
 
 Trên Windows PowerShell: `$env:VIDEOSERVICE_URL = "..."` và `$env:VIDEOSERVICE_API_KEY = "vs_..."`.
 
-## Dùng
+## Tạo video bằng một dòng
+
+```python
+from videoservice import text_to_video, image_to_video
+
+path = text_to_video("Phố cổ Hà Nội lúc hoàng hôn", seconds=5, resolution="768P")
+print(path)                                # h3_00001_.mp4
+
+path = image_to_video("anh.png", "Con mèo vẫy đuôi", seconds=5)   # ảnh là khung hình đầu
+```
+
+Hàm gửi job, in tiến độ, chờ xong rồi tải video về và trả đường dẫn file (`pathlib.Path`). Không cần biết workflow ComfyUI.
+
+- `resolution`: `"480P"` (mặc định) hoặc `"768P"`. **Tối đa 768P** (1344×768).
+- `seconds`: số giây video (mặc định 5; giới hạn theo độ phân giải: `Client().list_templates()["limits"]`).
+- `max_cost_vnd=30000`: giới hạn tiền cho job này. Dịch vụ giữ trước khoảng 1,5 lần giá ước tính (phần thừa trả
+  lại); nếu giới hạn thấp hơn số tiền giữ đó thì hàm báo lỗi `max_cost_below_hold` và **không gửi job**, vì job có thể
+  bị cắt giữa chừng mà vẫn mất tiền. Số tiền giữ của từng loại video: `hold_vnd` trong `Client().pricing()["h3_video"]`.
+- `save_dir="out"`: thư mục lưu video (mặc định thư mục hiện tại).
+- `portrait=True`: video dọc; `seed=2`: đổi để ra kết quả khác.
+- `image` của `image_to_video`: đường dẫn hoặc `bytes` ảnh PNG/JPG; ảnh được cắt giữa cho vừa khung video.
+- `on_progress=None`: không in tiến độ.
+- `client=Client(api_key=..., base_url=...)`: dùng key/URL khác thay vì biến môi trường.
+
+Giá ước tính trước khi chạy: `Client().pricing()["h3_video"]`. Job lỗi thì hàm raise `VideoServiceError` (xem dưới).
+
+### Cần video 2K?
+
+Dịch vụ tạo tối đa 768P. Muốn 2K (1440p) hay 4K thì tự upscale video đã tải về, ví dụ:
+
+- [Video2X](https://github.com/k4yt3x/video2x) (miễn phí, chạy trên GPU của máy bạn, dùng Real-ESRGAN / Real-CUGAN).
+- [Topaz Video AI](https://www.topazlabs.com/topaz-video-ai) (trả phí, dễ dùng).
+- Chỉ phóng to, không thêm chi tiết: `ffmpeg -i in.mp4 -vf scale=-2:1440:flags=lanczos -c:a copy out.mp4`.
+
+## Tự điều khiển
 
 ```python
 from videoservice import Client
@@ -55,9 +89,6 @@ paths = c.run(t["workflow"], save_dir="out")
 ```
 
 - `resolution`: `480P` hoặc `768P`; `seconds`: số giây video; `portrait=True`: video dọc.
-- `upscale="2K"`: phóng video lên 1440p (768P → 2520×1440) bằng SeedVR2 ngay trong job, giữ nguyên tiếng; tối đa
-  5 giây video. Lâu và đắt hơn video thường nhiều lần (5 giây 2K mất ~10 phút), xem `t["estimate"]` hoặc
-  `c.pricing()["h3_video"]`.
 - `c.template("h3_i2v", image="anh.png", ...)` lấy ảnh làm khung hình đầu: gửi kèm
   `c.run(t["workflow"], save_dir="out", inputs={"anh.png": "duong/dan/anh.png"})`.
 - Danh sách tham số: `c.list_templates()`.

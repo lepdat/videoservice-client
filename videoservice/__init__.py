@@ -1,6 +1,12 @@
 """
 Thư viện bạn bè cài để dùng dịch vụ.
 
+    from videoservice import text_to_video, image_to_video
+    path = text_to_video("Phố cổ Hà Nội lúc hoàng hôn", seconds=5, resolution="768P", max_cost_vnd=30000)
+    path = image_to_video("anh.png", "Con mèo vẫy đuôi")
+
+Tự điều khiển từng bước:
+
     from videoservice import Client
     c = Client(api_key="vs_...")
     print(c.balance())
@@ -84,8 +90,6 @@ class Client:
     def template(self, name: str, **params) -> dict:
         """Workflow mẫu dựng sẵn, ví dụ template("h3_i2v", prompt="...", resolution="768P", seconds=5).
 
-        upscale="2K" phóng video lên 1440p bằng SeedVR2 trong cùng job (lâu và đắt hơn, xem "estimate").
-
         Trả {workflow, inputs, ...}; gửi bằng submit(t["workflow"], inputs={tên trong t["inputs"]: đường dẫn ảnh}).
         """
         return self._req("GET", f"/templates/{name}", params=params)
@@ -156,3 +160,42 @@ class Client:
         if j["status"] != "succeeded":
             raise VideoServiceError(200, {"error": j.get("error") or {"code": j["status"], "message": j["status"]}})
         return self.download(job_id, save_dir)
+
+
+def text_to_video(prompt: str, seconds: float = 5, resolution: str = "480P", *, save_dir: str | Path = ".",
+                  max_cost_vnd: int | None = None, on_progress: Callable[[dict], None] | None = print_progress,
+                  client: Client | None = None, **options) -> Path:
+    """Tạo video H3 từ mô tả, chờ xong, tải về save_dir; trả đường dẫn file video.
+
+    resolution: "480P" hoặc "768P" (tối đa). max_cost_vnd: giới hạn tiền cho job này.
+    options: tham số khác của workflow mẫu h3_t2v, ví dụ portrait=True, seed=2 (xem Client().list_templates()).
+    on_progress=None để không in tiến độ. client: mặc định Client() đọc URL + key từ biến môi trường.
+    """
+    return _make_video(client, "h3_t2v", None, prompt=prompt, seconds=seconds, resolution=resolution,
+                       save_dir=save_dir, max_cost_vnd=max_cost_vnd, on_progress=on_progress, **options)
+
+
+def image_to_video(image: str | Path | bytes, prompt: str, seconds: float = 5, resolution: str = "480P", *,
+                   save_dir: str | Path = ".", max_cost_vnd: int | None = None,
+                   on_progress: Callable[[dict], None] | None = print_progress, client: Client | None = None,
+                   **options) -> Path:
+    """Như text_to_video, nhưng ảnh (đường dẫn hoặc bytes PNG/JPG) là khung hình đầu, cắt giữa cho vừa khung video."""
+    return _make_video(client, "h3_i2v", image, prompt=prompt, seconds=seconds, resolution=resolution,
+                       save_dir=save_dir, max_cost_vnd=max_cost_vnd, on_progress=on_progress, **options)
+
+
+def _make_video(client: Client | None, template: str, image: str | Path | bytes | None, *, save_dir: str | Path,
+                max_cost_vnd: int | None, on_progress: Callable[[dict], None] | None, **params) -> Path:
+    c = client or Client()
+    t = c.template(template, **params)
+    # Giới hạn thấp hơn tiền giữ thì dịch vụ rút ngắn timeout: job có thể bị cắt giữa chừng mà vẫn mất tiền.
+    est = t["estimate"]
+    if max_cost_vnd is not None and max_cost_vnd < est["hold_vnd"]:
+        raise VideoServiceError(400, {"error": {
+            "code": "max_cost_below_hold",
+            "message": f"Video này cần giữ trước {est['hold_vnd']:,}đ (ước tính dùng {est['price_vnd']:,}đ, phần thừa"
+                       f" trả lại); với max_cost_vnd={max_cost_vnd:,}đ job có thể bị cắt giữa chừng. Chưa gửi job.",
+            "hint": f"Đặt max_cost_vnd ≥ {est['hold_vnd']:,}, hoặc giảm seconds / resolution."}})
+    inputs = {name: image for name in t["inputs"]} or None
+    paths = c.run(t["workflow"], save_dir=save_dir, on_progress=on_progress, inputs=inputs, max_cost_vnd=max_cost_vnd)
+    return paths[0]
