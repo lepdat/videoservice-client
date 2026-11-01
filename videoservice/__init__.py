@@ -5,7 +5,7 @@ Thư viện bạn bè cài để dùng dịch vụ.
     c = Client(api_key="vs_...")
     print(c.balance())
     job = c.submit(workflow)                 # workflow ComfyUI dạng API format (dict)
-    c.wait(job["job_id"])                    # chờ đến khi xong
+    c.wait(job["job_id"], on_progress=print_progress)  # chờ đến khi xong, in từng giai đoạn
     paths = c.download(job["job_id"], "out") # tải file kết quả vào thư mục out/
 
 hoặc gọn hơn:  paths = c.run(workflow, save_dir="out")
@@ -14,6 +14,7 @@ import base64
 import os
 import time
 from pathlib import Path
+from typing import Callable
 
 import requests
 
@@ -21,6 +22,13 @@ import requests
 DEFAULT_URL = os.environ.get("VIDEOSERVICE_URL", "")
 
 FINAL_STATUSES = ("succeeded", "failed", "cancelled")
+
+
+def print_progress(job: dict) -> None:
+    """In một dòng tiến độ, ví dụ "job_ab12: Đang tạo: bước 3/8, còn khoảng 40 giây". Dùng làm on_progress."""
+    p = job.get("progress") or {}
+    eta = f", còn khoảng {p['eta_s']} giây" if p.get("eta_s") is not None else ""
+    print(f"{job['job_id']}: {p.get('message') or job['status']}{eta}", flush=True)
 
 
 class VideoServiceError(Exception):
@@ -95,13 +103,24 @@ class Client:
     def job(self, job_id: str) -> dict:
         return self._req("GET", f"/jobs/{job_id}")
 
-    def wait(self, job_id: str, poll_every: float = 5, max_wait: float = 1800) -> dict:
-        """Chờ job kết thúc, trả trạng thái cuối. Không tự raise khi job failed: xem job['error']."""
+    def wait(self, job_id: str, poll_every: float = 5, max_wait: float = 1800,
+             on_progress: Callable[[dict], None] | None = None) -> dict:
+        """Chờ job kết thúc, trả trạng thái cuối. Không tự raise khi job failed: xem job['error'].
+
+        on_progress(job) được gọi mỗi khi giai đoạn hoặc bước đổi; job["progress"] có stage (waiting_for_machine /
+        loading_model / generating / saving), message, step/steps khi đang tạo, eta_s (giây còn lại ước tính, có thể
+        None). In ra màn hình: on_progress=print_progress.
+        """
         deadline = time.time() + max_wait
+        last = None
         while time.time() < deadline:
             j = self.job(job_id)
             if j["status"] in FINAL_STATUSES:
                 return j
+            p = j.get("progress")
+            if on_progress and p and (shown := (p["stage"], p.get("step"))) != last:
+                last = shown
+                on_progress(j)
             time.sleep(poll_every)
         raise TimeoutError(f"Quá {max_wait} giây mà job {job_id} chưa xong")
 
@@ -127,10 +146,11 @@ class Client:
     def cancel(self, job_id: str) -> dict:
         return self._req("POST", f"/jobs/{job_id}/cancel")
 
-    def run(self, workflow: dict, save_dir: str | Path = ".", **submit_kw) -> list[Path]:
-        """Gửi, chờ, tải về. Job lỗi thì raise VideoServiceError kèm lỗi của job."""
+    def run(self, workflow: dict, save_dir: str | Path = ".",
+            on_progress: Callable[[dict], None] | None = None, **submit_kw) -> list[Path]:
+        """Gửi, chờ, tải về. Job lỗi thì raise VideoServiceError kèm lỗi của job. on_progress: xem wait()."""
         job_id = self.submit(workflow, **submit_kw)["job_id"]
-        j = self.wait(job_id)
+        j = self.wait(job_id, on_progress=on_progress)
         if j["status"] != "succeeded":
             raise VideoServiceError(200, {"error": j.get("error") or {"code": j["status"], "message": j["status"]}})
         return self.download(job_id, save_dir)

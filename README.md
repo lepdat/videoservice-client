@@ -55,6 +55,29 @@ files = c.download(job["job_id"], "out")
 c.cancel(job["job_id"])                  # hủy job đang chạy, chỉ tính phần đã chạy
 ```
 
+### Xem tiến độ
+
+Mỗi job đều phải khởi động máy và nạp model (~30–50 giây), rồi mới tạo. Để biết job đang ở bước nào:
+
+```python
+from videoservice import Client, print_progress
+
+c.wait(job["job_id"], on_progress=print_progress)    # cũng dùng được: c.run(workflow, on_progress=print_progress)
+# job_ab12: Đang chờ máy (GPU), còn khoảng 90 giây
+# job_ab12: Đang khởi động và nạp model, còn khoảng 88 giây
+# job_ab12: Đang tạo: bước 3/8, còn khoảng 41 giây
+# job_ab12: Đang giải mã và lưu kết quả, còn khoảng 12 giây
+```
+
+`on_progress` nhận dict của job, được gọi mỗi khi giai đoạn hoặc bước đổi. `c.job(job_id)["progress"]` cho biết tiến độ
+hiện tại (hết `None` khi job đã xong):
+
+- `stage`: `waiting_for_machine` (chờ máy, không tính tiền) → `loading_model` → `generating` → `saving`
+- `step` / `steps`: bước đang tạo (chỉ khi `generating`)
+- `eta_s`: số giây còn lại ước tính, `None` nếu chưa ước tính được. Không gồm thời gian chờ máy: giờ đông có thể
+  phải chờ thêm vài phút.
+- `message`: mô tả ngắn bằng tiếng Việt
+
 Lỗi từ dịch vụ là `VideoServiceError` với `code`, lời giải thích và gợi ý sửa; lỗi workflow nằm trong `e.errors`.
 
 ## Tiền
