@@ -90,6 +90,8 @@ class Client:
     def template(self, name: str, **params) -> dict:
         """Workflow mẫu dựng sẵn, ví dụ template("h3_i2v", prompt="...", resolution="768P", seconds=5).
 
+        upscale="2K" phóng video lên 1440p bằng SeedVR2 trong cùng job (lâu và đắt hơn, xem "estimate").
+
         Trả {workflow, inputs, ...}; gửi bằng submit(t["workflow"], inputs={tên trong t["inputs"]: đường dẫn ảnh}).
         """
         return self._req("GET", f"/templates/{name}", params=params)
@@ -168,7 +170,8 @@ def text_to_video(prompt: str, seconds: float = 5, resolution: str = "480P", *, 
     """Tạo video H3 từ mô tả, chờ xong, tải về save_dir; trả đường dẫn file video.
 
     resolution: "480P" hoặc "768P" (tối đa). max_cost_vnd: giới hạn tiền cho job này.
-    options: tham số khác của workflow mẫu h3_t2v, ví dụ portrait=True, seed=2 (xem Client().list_templates()).
+    options: tham số khác của workflow mẫu h3_t2v, ví dụ portrait=True, seed=2, upscale="2K"
+    (xem Client().list_templates()).
     on_progress=None để không in tiến độ. client: mặc định Client() đọc URL + key từ biến môi trường.
     """
     return _make_video(client, "h3_t2v", None, prompt=prompt, seconds=seconds, resolution=resolution,

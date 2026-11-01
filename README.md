@@ -49,7 +49,7 @@ Hàm gửi job, in tiến độ, chờ xong rồi tải video về và trả đ�
   lại); nếu giới hạn thấp hơn số tiền giữ đó thì hàm báo lỗi `max_cost_below_hold` và **không gửi job**, vì job có thể
   bị cắt giữa chừng mà vẫn mất tiền. Số tiền giữ của từng loại video: `hold_vnd` trong `Client().pricing()["h3_video"]`.
 - `save_dir="out"`: thư mục lưu video (mặc định thư mục hiện tại).
-- `portrait=True`: video dọc; `seed=2`: đổi để ra kết quả khác.
+- `portrait=True`: video dọc; `seed=2`: đổi để ra kết quả khác; `upscale="2K"`: xem [Cần video 2K?](#cần-video-2k).
 - `image` của `image_to_video`: đường dẫn hoặc `bytes` ảnh PNG/JPG; ảnh được cắt giữa cho vừa khung video.
 - `on_progress=None`: không in tiến độ.
 - `client=Client(api_key=..., base_url=...)`: dùng key/URL khác thay vì biến môi trường.
@@ -58,11 +58,15 @@ Giá ước tính trước khi chạy: `Client().pricing()["h3_video"]`. Job l�
 
 ### Cần video 2K?
 
-Dịch vụ tạo tối đa 768P. Muốn 2K (1440p) hay 4K thì tự upscale video đã tải về, ví dụ:
+Dịch vụ tạo tối đa 768P. Có hai cách lên 2K:
 
-- [Video2X](https://github.com/k4yt3x/video2x) (miễn phí, chạy trên GPU của máy bạn, dùng Real-ESRGAN / Real-CUGAN).
-- [Topaz Video AI](https://www.topazlabs.com/topaz-video-ai) (trả phí, dễ dùng).
-- Chỉ phóng to, không thêm chi tiết: `ffmpeg -i in.mp4 -vf scale=-2:1440:flags=lanczos -c:a copy out.mp4`.
+- `text_to_video(..., resolution="768P", upscale="2K")` (cả `image_to_video`): dịch vụ phóng video lên 1440p
+  (768P → 2520×1440) bằng SeedVR2 ngay trong job, giữ nguyên tiếng; tối đa 5 giây video. Lâu và đắt hơn video thường
+  nhiều lần (5 giây 2K mất ~10 phút, ~33.000đ, giữ trước ~52.000đ), xem `Client().pricing()["h3_video"]`.
+- Tự upscale video đã tải về (lên được cả 4K), ví dụ:
+  - [Video2X](https://github.com/k4yt3x/video2x) (miễn phí, chạy trên GPU của máy bạn, dùng Real-ESRGAN / Real-CUGAN).
+  - [Topaz Video AI](https://www.topazlabs.com/topaz-video-ai) (trả phí, dễ dùng).
+  - Chỉ phóng to, không thêm chi tiết: `ffmpeg -i in.mp4 -vf scale=-2:1440:flags=lanczos -c:a copy out.mp4`.
 
 ## Tự điều khiển
 
@@ -88,7 +92,8 @@ print(t["estimate"])                      # giá, tiền giữ, thời gian ch�
 paths = c.run(t["workflow"], save_dir="out")
 ```
 
-- `resolution`: `480P` hoặc `768P`; `seconds`: số giây video; `portrait=True`: video dọc.
+- `resolution`: `480P` hoặc `768P`; `seconds`: số giây video; `portrait=True`: video dọc; `upscale="2K"`: xem
+  [Cần video 2K?](#cần-video-2k), chi phí trong `t["estimate"]`.
 - `c.template("h3_i2v", image="anh.png", ...)` lấy ảnh làm khung hình đầu: gửi kèm
   `c.run(t["workflow"], save_dir="out", inputs={"anh.png": "duong/dan/anh.png"})`.
 - Danh sách tham số: `c.list_templates()`.
