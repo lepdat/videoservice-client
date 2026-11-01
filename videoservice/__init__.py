@@ -70,6 +70,16 @@ class Client:
     def list_models(self) -> dict:
         return self._req("GET", "/models")
 
+    def list_templates(self) -> dict:
+        return self._req("GET", "/templates")
+
+    def template(self, name: str, **params) -> dict:
+        """Workflow mẫu dựng sẵn, ví dụ template("h3_i2v", prompt="...", resolution="768P", seconds=5).
+
+        Trả {workflow, inputs, ...}; gửi bằng submit(t["workflow"], inputs={tên trong t["inputs"]: đường dẫn ảnh}).
+        """
+        return self._req("GET", f"/templates/{name}", params=params)
+
     def submit(self, workflow: dict, inputs: dict[str, str | bytes | Path] | None = None,
                max_cost_vnd: int | None = None) -> dict:
         """Gửi job. inputs: {tên_file: bytes | đường dẫn file}. Trả {job_id, estimated_cost, held, timeout_s}."""
