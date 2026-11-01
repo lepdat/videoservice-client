@@ -122,11 +122,13 @@ c.wait(job["job_id"], on_progress=print_progress)    # cũng dùng được: c.r
 # job_ab12: Đang giải mã và lưu kết quả, còn khoảng 12 giây
 ```
 
-`on_progress` nhận dict của job, được gọi mỗi khi giai đoạn hoặc bước đổi. `c.job(job_id)["progress"]` cho biết tiến độ
+`on_progress` nhận dict của job, được gọi mỗi khi giai đoạn, bước hoặc vị trí trong hàng đổi. `c.job(job_id)["progress"]` cho biết tiến độ
 hiện tại (hết `None` khi job đã xong):
 
-- `stage`: `waiting_for_machine` (chờ máy, không tính tiền) → `loading_model` → `generating` → `saving` (video 2K: thêm `upscaling` trước bước lưu cuối)
+- `stage`: `in_queue` (xếp hàng chờ tới lượt dùng GPU khi nhiều người cùng gửi, không tính tiền) → `waiting_for_machine` (chờ máy, không tính tiền) → `loading_model` → `generating` → `saving` (video 2K: thêm `upscaling` trước bước lưu cuối)
 - `step` / `steps`: bước đang tạo (chỉ khi `generating`)
+- `queue_position` / `wait_s`: vị trí trong hàng (1 = kế tiếp) và số giây ước tính tới lượt (chỉ khi `in_queue`).
+  Xếp hàng quá 3 giờ thì job bị hủy (`queue_timeout`), không tính tiền.
 - `eta_s`: số giây còn lại ước tính, `None` nếu chưa ước tính được. Lúc chờ máy chỉ tính trường hợp có GPU ngay; giờ
   đông có thể chờ hơn 15 phút, khi đó `eta_s` là `None` và `message` cho biết đã chờ bao lâu.
 - `message`: mô tả ngắn bằng tiếng Việt

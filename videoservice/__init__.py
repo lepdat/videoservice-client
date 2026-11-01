@@ -111,13 +111,14 @@ class Client:
     def job(self, job_id: str) -> dict:
         return self._req("GET", f"/jobs/{job_id}")
 
-    def wait(self, job_id: str, poll_every: float = 5, max_wait: float = 1800,
+    def wait(self, job_id: str, poll_every: float = 5, max_wait: float = 4 * 3600,
              on_progress: Callable[[dict], None] | None = None) -> dict:
         """Chờ job kết thúc, trả trạng thái cuối. Không tự raise khi job failed: xem job['error'].
 
-        on_progress(job) được gọi mỗi khi giai đoạn hoặc bước đổi; job["progress"] có stage (waiting_for_machine /
-        loading_model / generating / upscaling / saving), message, step/steps khi đang tạo, eta_s (giây còn lại ước tính, có thể
-        None). In ra màn hình: on_progress=print_progress.
+        on_progress(job) được gọi mỗi khi giai đoạn, bước hoặc vị trí trong hàng đổi; job["progress"] có stage (in_queue /
+        waiting_for_machine / loading_model / generating / upscaling / saving), message, step/steps khi đang tạo,
+        queue_position/wait_s khi đang xếp hàng, eta_s (giây còn lại ước tính, có thể None). In ra màn hình:
+        on_progress=print_progress. max_wait mặc định 4 giờ: dịch vụ tự hủy job xếp hàng quá 3 giờ.
         """
         deadline = time.time() + max_wait
         last = None
@@ -126,7 +127,7 @@ class Client:
             if j["status"] in FINAL_STATUSES:
                 return j
             p = j.get("progress")
-            if on_progress and p and (shown := (p["stage"], p.get("step"))) != last:
+            if on_progress and p and (shown := (p["stage"], p.get("step"), p.get("queue_position"))) != last:
                 last = shown
                 on_progress(j)
             time.sleep(poll_every)
