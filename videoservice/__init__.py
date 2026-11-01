@@ -114,7 +114,7 @@ class Client:
         """Chờ job kết thúc, trả trạng thái cuối. Không tự raise khi job failed: xem job['error'].
 
         on_progress(job) được gọi mỗi khi giai đoạn hoặc bước đổi; job["progress"] có stage (waiting_for_machine /
-        loading_model / generating / saving), message, step/steps khi đang tạo, eta_s (giây còn lại ước tính, có thể
+        loading_model / generating / upscaling / saving), message, step/steps khi đang tạo, eta_s (giây còn lại ước tính, có thể
         None). In ra màn hình: on_progress=print_progress.
         """
         deadline = time.time() + max_wait

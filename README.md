@@ -119,7 +119,7 @@ c.wait(job["job_id"], on_progress=print_progress)    # cũng dùng được: c.r
 `on_progress` nhận dict của job, được gọi mỗi khi giai đoạn hoặc bước đổi. `c.job(job_id)["progress"]` cho biết tiến độ
 hiện tại (hết `None` khi job đã xong):
 
-- `stage`: `waiting_for_machine` (chờ máy, không tính tiền) → `loading_model` → `generating` → `saving`
+- `stage`: `waiting_for_machine` (chờ máy, không tính tiền) → `loading_model` → `generating` → `saving` (video 2K: thêm `upscaling` trước bước lưu cuối)
 - `step` / `steps`: bước đang tạo (chỉ khi `generating`)
 - `eta_s`: số giây còn lại ước tính, `None` nếu chưa ước tính được. Không gồm thời gian chờ máy: giờ đông có thể
   phải chờ thêm vài phút.
