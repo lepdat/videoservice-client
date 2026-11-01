@@ -1,0 +1,6 @@
+Metadata-Version: 2.4
+Name: videoservice
+Version: 0.2.0
+Summary: Client tạo ảnh/video qua dịch vụ riêng
+Requires-Python: >=3.10
+Requires-Dist: requests>=2.31

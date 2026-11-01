@@ -1,0 +1,7 @@
+pyproject.toml
+videoservice/__init__.py
+videoservice.egg-info/PKG-INFO
+videoservice.egg-info/SOURCES.txt
+videoservice.egg-info/dependency_links.txt
+videoservice.egg-info/requires.txt
+videoservice.egg-info/top_level.txt

@@ -1,0 +1,10 @@
+[project]
+name = "videoservice"
+version = "0.2.0"
+description = "Client tạo ảnh/video qua dịch vụ riêng"
+requires-python = ">=3.10"
+dependencies = ["requests>=2.31"]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
